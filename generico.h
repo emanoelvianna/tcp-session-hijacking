@@ -1,5 +1,6 @@
 /* declaracao das constantes */
 #define ETHERNET_ADDR_LEN 6
+#define IPV6_ADDR_LEN 16
 #define IP_ADDR_LEN 4
 #define ARP_PADDING_SIZE 18
 #define ETHERTYPE 0x86DD /** indicando que é do tipo IPv6 **/
@@ -29,8 +30,8 @@ typedef struct
     unsigned short payload_length;                        // 16 bits
     unsigned char next_header;                            // 8 bits
     unsigned char hop_limit;                              // 8 bits
-    unsigned char source_address[ETHERNET_ADDR_LEN];      // 128 bits
-    unsigned char destination_address[ETHERNET_ADDR_LEN]; // 128 bits
+    unsigned char source_address[IPV6_ADDR_LEN];      // 128 bits
+    unsigned char destination_address[IPV6_ADDR_LEN]; // 128 bits
     // extension_header;
     /* Pacote TCP */
     
