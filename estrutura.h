@@ -4,8 +4,9 @@
 //TODO: passar para português
 
 /* declaracao das constantes */
-#define PORTA 4242    /* definindo a porta de conexão  */
-#define PCKT_LEN 1500 /* definicao do tamanho do pacote */
+#define PORT 4242       /* definindo a porta de conexão  */
+#define PCKT_LEN 1500   /* definicao do tamanho do pacote */
+#define TAMANHO_MENSAGEM 100 /* definicao do tamanho da mensagem */
 
 #define ETHERNET_ADDR_LEN 6
 #define IPV6_ADDR_LEN 16
@@ -45,7 +46,7 @@ typedef struct
     unsigned short int checkSum;
     unsigned short int urg_pointer;
     /* Dados */
-    char mensagem[100];
+    char mensagem[TAMANHO_MENSAGEM];
 } estrutura_pacote;
 
 #endif
