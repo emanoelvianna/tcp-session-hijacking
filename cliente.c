@@ -14,7 +14,8 @@
 //TODO: deve ser informado como parametro!
 #define IP_SERVIDOR "::1"
 
-unsigned short calcular_checkSum(unsigned short *buf, int len)
+/* metodo auxiliar para calcular o checksum */
+unsigned short calcular_checksum(unsigned short *buf, int len)
 {
 	unsigned long sum;
 	for (sum = 0; len > 0; len--)
@@ -42,24 +43,45 @@ int main(int argc, char *argv[])
 	/* setando o tipo de endeço para comunicacao */
 	cliente.sin6_family = AF_INET6;
 	/* setando a porta de comunicacao */
-	cliente.sin6_port = htons(PORT);
-	/* setando um endereço endereço IPv6 qualquer */
-	inet_pton(AF_INET6, "::1", &cliente.sin6_addr);
+	cliente.sin6_port = htons(PORTA_SERVIDOR);
+	/* setando um endereço endereço IPv6 servidor */
+	inet_pton(AF_INET6, IP_SERVIDOR, &cliente.sin6_addr);
 
 	do
 	{
 		/* garantindo que não ira existir lixo no pacote */
 		memset(&pacote, 0x00, sizeof(pacote));
 
-		fprintf(stdout, "Enviar mensagem ao servidor: ");
+		fprintf(stdout, "[INFO] Enviar mensagem ao servidor: ");
 		fgets(pacote.mensagem, TAMANHO_MENSAGEM, stdin);
 
 		/* garantindo que não ira existir lixo no pacote */
 		memset(&pacote, 0x00, sizeof(pacote));
+
 		/* criando trecho do pacote Ethernet */
-		memcpy(argv[1], pacote.source_ethernet_address, ETHERNET_ADDR_LEN);
+		memcpy(MAC_SERVIDOR, pacote.target_ethernet_address, ETHERNET_ADDR_LEN);
+		memcpy(MAC_CLIENTE, pacote.source_ethernet_address, ETHERNET_ADDR_LEN);
+		pacote.ethernet_type = ETHERTYPE;
 		/* criando trecho do pacote IPv6 */
+		pacote.version = 6;
+		pacote.traffic_class = 0;
+		pacote.flow_label;
+		pacote.payload_length;
+		pacote.next_header;
+		pacote.hop_limit = 5;
+		pacote.source_address;
+		pacote.destination_address;
 		/* criando trecho do pacote TCP */
+		pacote.source_port = PORTA_SERVIDOR;
+		pacote.destination_port = PORTA_SERVIDOR;
+		pacote.sequence_number = htonl(1);
+		pacote.ack_number = 0;
+		pacote.tcph_reserved;
+		pacote.tcph_offset;
+		pacote.tcph_flags;
+		pacote.windows_size;
+		pacote.checkSum = 0; //TODO: calcular!
+		pacote.urg_pointer = 0;
 
 		/* enviando pacote ao servidor */
 		if (send(socket_cliente, &pacote, sizeof(pacote), 0) < 0)

@@ -1,7 +1,0 @@
-{
-    "files.associations": {
-        "cstdlib": "c",
-        "ether.h": "c",
-        "unistd.h": "c"
-    }
-}

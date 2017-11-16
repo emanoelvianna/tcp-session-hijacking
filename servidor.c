@@ -29,9 +29,9 @@ int main(int argc, char *argv[])
 	/* setando o tipo de endeço para comunicacao */
 	servidor.sin6_family = AF_INET6;
 	/* setando a porta de comunicacao */
-	servidor.sin6_port = htons(PORT);
+	servidor.sin6_port = htons(PORTA_SERVIDOR);
 	/* setando um endereço endereço IPv6 qualquer */
-	inet_pton(AF_INET6, "2001:db8:8714:3a90::12", &servidor.sin6_addr);
+	inet_pton(AF_INET6, "::1", &servidor.sin6_addr);
 
 	/* associando o socket a porta */
 	if (bind(socket_servidor, (const void *)&servidor, sizeof(servidor)) == -1)
@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	printf("[INFO] esperando cliente enviar mensagem na conexao!\n");
+	printf("[INFO] esperando cliente enviar mensagem!\n");
 	/* enquanto cliente enviar mensagem */
 	do
 	{
@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 		/* recebendo mensagens do cliente */
 		recv(socket_servidor, (char *)&pacote, sizeof(pacote), 0x0);
 
-		if (pacote.source_port == PORT)
+		if (pacote.source_port == PORTA_SERVIDOR)
 		{
 			/* garantindo que não ira existir lixo no pacote */
 			memset(&pacote, 0x00, sizeof(pacote));

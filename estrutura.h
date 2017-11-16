@@ -4,19 +4,23 @@
 //TODO: passar para português
 
 /* declaracao das constantes */
-#define PORT 4242       /* definindo a porta de conexão  */
-#define PCKT_LEN 1500   /* definicao do tamanho do pacote */
+#define PORTA_SERVIDOR 4242 /* definindo a porta de conexão  */
+#define PORTA_CLIENTE 4200  /* definindo a porta de conexão  */
+
+#define PCKT_LEN 1500        /* definicao do tamanho do pacote */
 #define TAMANHO_MENSAGEM 100 /* definicao do tamanho da mensagem */
 
 #define ETHERNET_ADDR_LEN 6
 #define IPV6_ADDR_LEN 16
-#define IP_ADDR_LEN 4
-#define ARP_PADDING_SIZE 18
 #define ETHERTYPE 0x86DD /** indicando que é do tipo IPv6 **/
-#define ARPHRD_ETHER 1
-#define ETH_P_IP 0x0800
-#define ARPOP_REQUEST 1
-#define ARPOP_REPLY 2
+
+/* definições de endereço IP */
+#define IP_SERVIDOR "::1"
+#define IP_CLIENTE "::2"
+
+/* definições de endereço MAC */
+#define MAC_SERVIDOR "78:2b:cb:ed:c4:37"
+#define MAC_CLIENTE "78:2b:cb:ed:c4:37"
 
 typedef struct
 {
@@ -39,8 +43,8 @@ typedef struct
     unsigned short int destination_port;
     unsigned int sequence_number;
     unsigned int ack_number;
-    unsigned char tcph_reserved : 4;
-    unsigned char tcph_offset : 4;
+    unsigned char tcph_reserved;
+    unsigned char tcph_offset;
     unsigned char tcph_flags;
     unsigned short int windows_size;
     unsigned short int checkSum;
