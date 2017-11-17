@@ -1,13 +1,9 @@
 #ifndef HEADER_MASTER
 #define HEADER_MASTER
 
-//TODO: passar para português
-
 /* declaracao das constantes */
+#define IP_SERVIDOR "::1"
 #define PORTA_SERVIDOR 4242 /* definindo a porta de conexão  */
-#define PORTA_CLIENTE 4200  /* definindo a porta de conexão  */
-
-#define PCKT_LEN 1500        /* definicao do tamanho do pacote */
 #define TAMANHO_MENSAGEM 100 /* definicao do tamanho da mensagem */
 
 #define ETHERNET_ADDR_LEN 6
