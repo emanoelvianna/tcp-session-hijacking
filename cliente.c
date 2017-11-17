@@ -11,85 +11,48 @@
 /* dependencia de utilitarios */
 #include "estrutura.h"
 
-//TODO: deve ser informado como parametro!
-#define IP_SERVIDOR "::1"
+int main(int argc, char *argv[]) {
 
-/* metodo auxiliar para calcular o checksum */
-unsigned short calcular_checksum(unsigned short *buf, int len)
-{
-	unsigned long sum;
-	for (sum = 0; len > 0; len--)
-		sum += *buf++;
-	sum = (sum >> 16) + (sum & 0xffff);
-	sum += (sum >> 16);
-	return (unsigned short)(~sum);
-}
+    struct sockaddr_in6 servidor;
+    int socket_cliente;
+    int tamanho = sizeof(servidor);
+    char mensagem[TAMANHO_MENSAGEM];
 
-int main(int argc, char *argv[])
-{
-	estrutura_pacote pacote;
-	int socket_cliente;
-	struct sockaddr_in6 cliente;
-
-	/* abrindo o socket com IPv6 */
-	socket_cliente = socket(AF_INET6, SOCK_RAW, IPPROTO_TCP);
-	if (socket_cliente < 0)
-	{
-		fprintf(stderr, "[INFO] erro ao abrir socket no servidor!\n");
-		exit(1);
-	}
-	printf("[INFO] socket do cliente criando com sucesso!\n");
+    /* abrindo o socket com IPv6 */
+    if ((socket_cliente = socket(AF_INET6, SOCK_STREAM, 0)) == -1) {
+        perror("[INFO] erro ao abrir socket no servidor!\n");
+        return EXIT_FAILURE;
+    }
+    printf("[INFO] socket do cliente criando com sucesso!\n");
 
 	/* setando o tipo de endeço para comunicacao */
-	cliente.sin6_family = AF_INET6;
-	/* setando a porta de comunicacao */
-	cliente.sin6_port = htons(PORTA_SERVIDOR);
-	/* setando um endereço endereço IPv6 servidor */
-	inet_pton(AF_INET6, IP_SERVIDOR, &cliente.sin6_addr);
+    servidor.sin6_family = AF_INET6;
+    /* setando a porta de comunicacao */
+    servidor.sin6_port = htons(PORTA_SERVIDOR);
+    /* setando um endereço endereço IPv6 servidor */
+	inet_pton(AF_INET6, IP_SERVIDOR, &servidor.sin6_addr);
 
-	do
-	{
-		/* garantindo que não ira existir lixo no pacote */
-		memset(&pacote, 0x00, sizeof(pacote));
+    /* Tries to connect to the servidor */
+    if (connect(socket_cliente, (struct sockaddr*) &servidor, tamanho) == -1) {
+        perror("[INFO] erro ao conectar ao servidor!\n");
+        return EXIT_FAILURE;
+    }
 
-		fprintf(stdout, "[INFO] Enviar mensagem ao servidor: ");
-		fgets(pacote.mensagem, TAMANHO_MENSAGEM, stdin);
+    while (1) {
 
-		/* garantindo que não ira existir lixo no pacote */
-		memset(&pacote, 0x00, sizeof(pacote));
+        /* garantindo que não ira existir lixo no buffer */
+        memset(mensagem, 0x0, TAMANHO_MENSAGEM);
 
-		/* criando trecho do pacote Ethernet */
-		memcpy(MAC_SERVIDOR, pacote.target_ethernet_address, ETHERNET_ADDR_LEN);
-		memcpy(MAC_CLIENTE, pacote.source_ethernet_address, ETHERNET_ADDR_LEN);
-		pacote.ethernet_type = ETHERTYPE;
-		/* criando trecho do pacote IPv6 */
-		pacote.version = 6;
-		pacote.traffic_class = 0;
-		pacote.flow_label;
-		pacote.payload_length;
-		pacote.next_header;
-		pacote.hop_limit = 5;
-		pacote.source_address;
-		pacote.destination_address;
-		/* criando trecho do pacote TCP */
-		pacote.source_port = PORTA_SERVIDOR;
-		pacote.destination_port = PORTA_SERVIDOR;
-		pacote.sequence_number = htonl(1);
-		pacote.ack_number = 0;
-		pacote.tcph_reserved;
-		pacote.tcph_offset;
-		pacote.tcph_flags;
-		pacote.windows_size;
-		pacote.checkSum = 0; //TODO: calcular!
-		pacote.urg_pointer = 0;
+        fprintf(stdout, "[INFO] Enviar mensagem ao servidor: ");
+        fgets(mensagem, TAMANHO_MENSAGEM, stdin);
 
-		/* enviando pacote ao servidor */
-		if (send(socket_cliente, &pacote, sizeof(pacote), 0) < 0)
-		{
-			perror("[INFO] nao é possível pacote ao servidor!\n");
-		}
+        /* enviando pacote ao servidor */
+        send(socket_cliente, mensagem, strlen(mensagem), 0);
+    }
 
-	} while (strcmp(pacote.mensagem, "tchau"));
-
-	return 0;
+    /* fechando conexao com o servidor */
+    close(socket_cliente);
+	fprintf(stdout, "[INFO]Conexao fechada!\n");
+	
+    return EXIT_SUCCESS;
 }
