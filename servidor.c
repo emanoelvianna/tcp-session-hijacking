@@ -11,69 +11,97 @@
 /* dependencia de utilitarios */
 #include "estrutura.h"
 
-int main(int argc, char *argv[])
-{
-	estrutura_pacote pacote;
-	int socket_servidor;
-	struct sockaddr_in6 servidor;
+int main(void) {
 
-	/* abrindo o socket com IPv6 */
-	socket_servidor = socket(PF_INET6, SOCK_RAW, IPPROTO_TCP);
-	if (socket_servidor < 0)
-	{
-		fprintf(stderr, "[INFO] erro ao abrir socket no servidor!\n");
-		exit(1);
-	}
-	printf("[INFO] socket do servidor criando com sucesso!\n");
+    /* Client and Server socket structures */
+    struct sockaddr_in6 client, server;
 
-	/* setando o tipo de endeço para comunicacao */
-	servidor.sin6_family = AF_INET6;
-	/* setando a porta de comunicacao */
-	servidor.sin6_port = htons(PORTA_SERVIDOR);
-	/* setando um endereço endereço IPv6 qualquer */
-	inet_pton(AF_INET6, "::1", &servidor.sin6_addr);
+    /* File descriptors of client and server */
+    int serverfd, clientfd;
 
-	/* associando o socket a porta */
-	if (bind(socket_servidor, (const void *)&servidor, sizeof(servidor)) == -1)
-	{
-		perror("[INFO] erro ao tentar associar a porta!\n");
-		return EXIT_FAILURE;
-	}
+    char buffer[TAMANHO_MENSAGEM];
 
-	printf("[INFO] esperando cliente enviar mensagem!\n");
-	/* enquanto cliente enviar mensagem */
-	do
-	{
-		/* garantindo que não ira existir lixo no pacote */
-		memset(&pacote, 0x00, sizeof(pacote));
-		/* recebendo mensagens do cliente */
-		recv(socket_servidor, (char *)&pacote, sizeof(pacote), 0x0);
+    fprintf(stdout, "Starting server\n");
 
-		if (pacote.source_port == PORTA_SERVIDOR)
-		{
-			/* garantindo que não ira existir lixo no pacote */
-			memset(&pacote, 0x00, sizeof(pacote));
-			/* criando trecho do pacote Ethernet */
-			memcpy(argv[1], pacote.source_ethernet_address, ETHERNET_ADDR_LEN);
-			/* criando trecho do pacote IPv6 */
-			/* criando trecho do pacote TCP */
+    /* Creates a IPv4 socket */
+    serverfd = socket(AF_INET6, SOCK_STREAM, 0);
+    if(serverfd == -1) {
+        perror("Can't create the server socket:");
+        return EXIT_FAILURE;
+    }
+    fprintf(stdout, "Server socket created with fd: %d\n", serverfd);
 
-			/* enviando pacote ao cliente */
-			if (send(socket_servidor, &pacote, sizeof(pacote), 0) < 0)
-			{
-				perror("[INFO] nao é possível pacote ao servidor!\n");
-			}
 
-			printf("[INFO] cliente diz: %s\n", pacote.mensagem);
-			if (strcmp(pacote.mensagem, "tchau") == 0)
-			{
-				printf("[INFO] cliente acabou de sair da conexao!\n");
-			}
-		}
-	} while (strcmp(pacote.mensagem, "tchau"));
+    /* Defines the server socket properties */
+    server.sin6_family = AF_INET6;
+    server.sin6_port = htons(PORTA_SERVIDOR);
+	inet_pton(AF_INET6, "::1", &server.sin6_addr);
 
-	/* fechando conexao com servidor e cliente */
-	close(socket_servidor);
+    /* Handle the error of the port already in use */
+    int yes = 1;
+    if(setsockopt(serverfd, SOL_SOCKET, SO_REUSEADDR,
+                  &yes, sizeof(int)) == -1) {
+        perror("Socket options error:");
+        return EXIT_FAILURE;
+    }
 
-	return 0;
+
+    /* bind the socket to a port */
+    if(bind(serverfd, (struct sockaddr*)&server, sizeof(server)) == -1 ) {
+        perror("Socket bind error:");
+        return EXIT_FAILURE;
+    }
+
+
+    /* Starts to wait connections from clients */
+    if(listen(serverfd, 1) == -1) {
+        perror("Listen error:");
+        return EXIT_FAILURE;
+    }
+    fprintf(stdout, "Listening on port %d\n", PORTA_SERVIDOR);
+
+    socklen_t client_len = sizeof(client);
+    if ((clientfd=accept(serverfd,
+        (struct sockaddr *) &client, &client_len )) == -1) {
+        perror("Accept error:");
+        return EXIT_FAILURE;
+    }
+
+    /* Copies into buffer our welcome messaage */
+    strcpy(buffer, "Hello, client!\n\0");
+
+    /* Sends the message to the client */
+    if (send(clientfd, buffer, strlen(buffer), 0)) {
+        fprintf(stdout, "Client connected.\nWaiting for client message ...\n");
+
+        /* Communicates with the client until bye message come */
+        do {
+
+            /* Zeroing buffers */
+            memset(buffer, 0x0, TAMANHO_MENSAGEM);
+
+            /* Receives client message */
+            int message_len;
+            if((message_len = recv(clientfd, buffer, TAMANHO_MENSAGEM, 0)) > 0) {
+                buffer[message_len - 1] = '\0';
+                printf("Client says: %s\n", buffer);
+            }
+
+            /* 'bye' message finishes the connection */
+            if(strcmp(buffer, "bye") == 0) {
+                send(clientfd, "bye", 3, 0);
+            } else {
+                send(clientfd, "yep\n", 4, 0);
+            }
+
+        } while(strcmp(buffer, "bye"));
+    }
+
+    /* Client connection Close */
+    close(clientfd);
+    /* Close the local socket */
+    close(serverfd);
+    printf("Connection closed\n\n");
+
+    return EXIT_SUCCESS;
 }
