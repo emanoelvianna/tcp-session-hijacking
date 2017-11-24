@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
 
     /* abrindo o socket com IPv6 */
     if ((socket_cliente = socket(AF_INET6, SOCK_STREAM, 0)) == -1) {
-        perror("[INFO] erro ao abrir socket no servidor!\n");
+        perror("[INFO] erro ao abrir socket no cliente!\n");
         return EXIT_FAILURE;
     }
     printf("[INFO] socket do cliente criando com sucesso!\n");
@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
 
     while (1) {
 
-        /* garantindo que não ira existir lixo no buffer */
+        /* garantindo que não ira existir lixo na mensagem */
         memset(mensagem, 0x0, TAMANHO_MENSAGEM);
 
         fprintf(stdout, "[INFO] Enviar mensagem ao servidor: ");
