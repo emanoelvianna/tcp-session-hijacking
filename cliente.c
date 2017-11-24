@@ -38,8 +38,7 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    while (1) {
-
+    do {
         /* garantindo que não ira existir lixo na mensagem */
         memset(mensagem, 0x0, TAMANHO_MENSAGEM);
 
@@ -48,7 +47,7 @@ int main(int argc, char *argv[]) {
 
         /* enviando pacote ao servidor */
         send(socket_cliente, mensagem, strlen(mensagem), 0);
-    }
+    } while (strcmp(mensagem, "tchau"));
 
     /* fechando conexao com o servidor */
     close(socket_cliente);
