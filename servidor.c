@@ -67,9 +67,8 @@ int main(void)
     fprintf(stdout, "[INFO] cliente entrou na conexao!\n");
 
     /* Communicates with the client until bye message come */
-    do
-    {
-        /* garantindo que não ira existir lixo no buffer */
+    do {
+        /* garantindo que não ira existir lixo na mensagem */
         memset(mensagem, 0x0, TAMANHO_MENSAGEM);
 
         int message_len;
