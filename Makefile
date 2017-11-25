@@ -1,10 +1,7 @@
-all:			cliente servidor
+all:		cliente
 
-cliente:   	cliente.c
-			gcc cliente.c -o cliente
-
-servidor:	servidor.c
-			gcc servidor.c -o servidor
+cliente:   	icmp_descobrir.c
+			gcc icmp_descobrir.c -o descobrir
 
 clean:
-			rm -f cliente servidor *~
+			rm -f descobrir *~

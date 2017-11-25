@@ -33,7 +33,7 @@ typedef struct
     unsigned char hop_limit;
     unsigned char source_address[IPV6_ADDR_LEN];
     unsigned char destination_address[IPV6_ADDR_LEN];
-    // extension_header;
+    /* extension_header */
     /* Pacote TCP */
     unsigned short int source_port;
     unsigned short int destination_port;
@@ -47,6 +47,33 @@ typedef struct
     unsigned short int urg_pointer;
     /* Dados */
     char mensagem[TAMANHO_MENSAGEM];
-} estrutura_pacote;
+} estrutura_pacote_tcp;
+
+typedef struct
+{
+    /* Cabeçalho Ethernet */
+    unsigned char target_ethernet_address[ETHERNET_ADDR_LEN]; // endereco_fisico_destino
+    unsigned char source_ethernet_address[ETHERNET_ADDR_LEN]; // endereco_fisico_origem
+    unsigned short ethernet_type;
+    /* Pacote IPv6 */
+    unsigned char version : 6;
+    unsigned char traffic_class;
+    unsigned int flow_label;
+    unsigned short payload_length;
+    unsigned char next_header;
+    unsigned char hop_limit;
+    unsigned char source_address[IPV6_ADDR_LEN];
+    unsigned char destination_address[IPV6_ADDR_LEN];
+    /* Pacote ICMP */
+    uint8_t icmp6_type;
+    uint8_t icmp6_code;
+    uint16_t icmp6_cksum;
+    union {
+      uint32_t icmp6_un_data32[1];
+      uint16_t icmp6_un_data16[2];
+      uint8_t icmp6_un_data8[4];
+    } data;
+
+} estrutura_pacote_icmp;
 
 #endif

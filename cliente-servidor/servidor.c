@@ -8,8 +8,11 @@
 #include <netinet/ether.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-/* dependencia de utilitarios */
-#include "estrutura.h"
+
+/* declaracao das constantes */
+#define IP_SERVIDOR "::1"
+#define PORTA_SERVIDOR 4242 /* definindo a porta de conexão  */
+#define TAMANHO_MENSAGEM 100 /* definicao do tamanho da mensagem */
 
 int main(void)
 {
