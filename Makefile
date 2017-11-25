@@ -1,7 +1,7 @@
-all:		cliente
+all:		invadir
 
-cliente:   	icmp_descobrir.c
-			gcc icmp_descobrir.c -o descobrir
+invadir:   	homem-do-meio.c
+			gcc homem-do-meio.c -o invadir
 
 clean:
-			rm -f descobrir *~
+			rm -f invadir *~
