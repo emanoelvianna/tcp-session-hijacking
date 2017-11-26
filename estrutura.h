@@ -1,15 +1,12 @@
 #ifndef SENDER_H
 #define SENDER_H
 
-//#include "in_cksum.c" //Calculo do checksum
-
+/* dependencia externa*/
 #include <stdio.h>
-//#include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
-
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -25,9 +22,17 @@
 #include <netinet/in.h>
 #include <bits/ioctls.h>
 #include <linux/if_ether.h>
-
-//TCP
 #include <netinet/tcp.h>
+
+#define ETHERNET_ADDR_LEN 6
+
+typedef struct
+{
+    /* Cabeçalho Ethernet */
+    unsigned char target_ethernet_address[ETHERNET_ADDR_LEN]; // endereco_fisico_destino
+    unsigned char source_ethernet_address[ETHERNET_ADDR_LEN]; // endereco_fisico_origem
+    unsigned short ethernet_type;                             // tipo_protocolo_ethernet
+} estrutura_pacote;
 
 void monta_e_envia_pacote();
 void monta_data_tcp();

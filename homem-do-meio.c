@@ -1,25 +1,4 @@
-/* dependencia externa*/
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <signal.h>
-#include <errno.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <net/if.h>
-#include <arpa/inet.h>
-#include <net/ethernet.h>
-#include <netinet/ip.h>
-#include <linux/if_packet.h>
-#include <netinet/ip6.h>
-#include <netinet/icmp6.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <bits/ioctls.h>
-#include <linux/if_ether.h>
-/* dependencia de utilitarios */
+/* dependencias e utilitarios */
 #include "estrutura.h"
 
 /* declaração das variaveis genericas */
@@ -35,13 +14,14 @@ u_int32_t seq, ack_seq;
 int isEchoRequest;
 u_int32_t icmpv6Seq;
 char *sourceIP, *destinationIP;
-u_int8_t destinationMacAddress[ETH_ALEN];
 
 /* declaração das variaives utilizadas no Ethernet */
 unsigned int ethernetHeaderLength;
 struct ifreq ifr;
 char *interface;
-uint8_t *sourceMacAddress;
+
+unsigned char sourceMacAddress[ETHERNET_ADDR_LEN];
+unsigned char destinationMacAddress[ETHERNET_ADDR_LEN];
 
 /* declaração das variaives utilizadas no IPv6 */
 struct ip6_hdr *ipv6Header; // a struct ip esta descrita no /usr/include/netinet/ip.h
@@ -66,8 +46,8 @@ int obter_mac()
 	strncpy(ifr.ifr_name, input_ifname, IFNAMSIZ - 1);
 	if (ioctl(fd, SIOCGIFHWADDR, &ifr) < 0)
 	{
-		perror("[INFO] falha ao capturar MAC de origem!\n");
-		exit(EXIT_FAILURE);
+		printf("[INFO] Erro obter mac local.\n");
+		exit(1);
 	}
 	close(fd);
 
@@ -91,6 +71,28 @@ void monta_pacote_ethernet()
 	{
 		ethernetHeader->ether_dhost[i] = destinationMacAddress[i];
 	}
+
+	printf("MAC origem: %s\n", ethernetHeader->ether_shost);
+	printf("MAC destino: %s\n", ethernetHeader->ether_dhost);
+}
+
+void monta_to()
+{
+	/* Identicacao de qual maquina (MAC) deve receber a mensagem enviada no socket. */
+	to.sll_family = htons(PF_PACKET);
+	to.sll_protocol = htons(ETH_P_ALL);
+
+	// Find interface index from interface name and store index in struct sockaddr_ll device, which will be used as an argument of sendto().
+	if ((to.sll_ifindex = if_nametoindex(interface)) == 0)
+	{ /* indice da interface pela qual os pacotes serao enviados */
+		perror("if_nametoindex() failed to obtain interface index ");
+		exit(EXIT_FAILURE);
+	}
+
+	// Fill out sockaddr_ll.
+	to.sll_family = AF_PACKET;
+	memcpy(to.sll_addr, sourceMacAddress, 6 * sizeof(uint8_t));
+	to.sll_halen = htons(6);
 }
 
 void monta_pacote_ipv6()
@@ -123,6 +125,14 @@ void monta_pacote_reply_icmpv6()
 	icmpv6Header->icmp6_id = htons(666); //Identificador
 	icmpv6Header->icmp6_seq = htons(icmpv6Seq);
 	icmpv6Header->icmp6_cksum = (icmp6_checksum(*ipv6Header, *icmpv6Header, &pacote[ethernetHeaderLength + ipv6HeaderLength + icmpv6HeaderLength], tcpHeaderLength + tcpDataLength));
+}
+
+void enviar_reply_cliente()
+{
+}
+
+void enviar_reply_servidor()
+{
 }
 
 uint16_t icmp6_checksum(struct ip6_hdr iphdr, struct icmp6_hdr icmp6hdr, uint8_t *payload, int payloadlen)
@@ -259,32 +269,46 @@ int main(int argc, char **argv)
 	{
 		usar(argv[0]);
 	}
-
-	/* obtendo interface de rede */
-	input_ifname = argv[1];
-	/* obtendo o mac do servidor */
-	obter_mac();
-
-	/*  */
-
-	pacote = (uint8_t *)malloc(IP_MAXPACKET * sizeof(uint8_t));
-	memset(pacote, 0, IP_MAXPACKET * sizeof(uint8_t));
-
-	/* definindo tamanhos para os pacotes */
-	ethernetHeaderLength = 14;
-	ipv6HeaderLength = 40;
-	icmpv6HeaderLength = 8;
-	tcpHeaderLength = sizeof(struct tcphdr);
-
-	monta_pacote_ethernet();
-	monta_pacote_ipv6();
-	monta_pacote_reply_icmpv6();
-
-	int retValue = 0;
-	if ((retValue = sendto(socketDescriptor, (char *)pacote, ethernetHeaderLength + ipv6HeaderLength + icmpv6HeaderLength + tcpHeaderLength + tcpDataLength, 0, (struct sockaddr *)&to, sizeof(to)) < 0))
+	else
 	{
-		printf("[INFO] erro ao enviar pacote ICMP: %d\n", retValue);
-		exit(1);
+		/* obtendo interface de rede */
+		input_ifname = argv[1];
+		/* obtendo o mac do origem */
+		obter_mac();
+
+		/* copiando mac destino */
+		strcpy(destinationMacAddress, argv[2]);
+
+		/* definindo tamanho do pacote a ser enviado */
+		pacote = (uint8_t *)malloc(IP_MAXPACKET * sizeof(uint8_t));
+		memset(pacote, 0, IP_MAXPACKET * sizeof(uint8_t));
+
+		/* definindo tamanhos para os pacotes */
+		ethernetHeaderLength = 14;
+		ipv6HeaderLength = 40;
+		icmpv6HeaderLength = 8;
+		tcpHeaderLength = sizeof(struct tcphdr);
+
+		/* definindo propriedades do pacote */
+		icmpv6Seq = 1;
+
+		if ((socketDescriptor = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0)
+		{
+			printf("[INFO] Erro na criacao do socket.\n");
+			exit(1);
+		}
+
+		monta_pacote_ethernet();
+
+		//monta_pacote_ipv6();
+		//monta_pacote_reply_icmpv6();
+
+		int retValue = 0;
+		if ((retValue = sendto(socketDescriptor, (char *)pacote, ethernetHeaderLength, 0, (struct sockaddr *)&to, sizeof(to)) < 0))
+		{
+			printf("[INFO] erro ao enviar pacote ICMP reply ao cliente.\n");
+			exit(1);
+		}
 	}
 
 	return 0;
